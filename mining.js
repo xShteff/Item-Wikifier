@@ -155,13 +155,20 @@ var Wikifier = {
                 return $('<td>').html(content);
             },
             buildLabel: function(text) {
-                return $('<td>').text(text).css('line-height', '30px');
+                return $('<td>').text(text).css({
+                    'line-height': '30px',
+                    'font-weight': 'bold'
+                });
             },
             buildTable: function() {
                 var table = $('<table>');
-                var r1Content = [Wikifier.Window.Table.buildLabel("Item Id"), Wikifier.Window.Table.buildCell(new west.gui.Textfield('item_id').setSize(10).getMainDiv())];
+                var r1Content = [Wikifier.Window.Table.buildLabel("Item Id: "), Wikifier.Window.Table.buildCell(new west.gui.Textfield('wikifier_item_id').setSize(15).onlyNumeric().getMainDiv())];
                 var r1 = Wikifier.Window.Table.buildRow(r1Content);
-                table.append(r1);
+                var r2Content = [Wikifier.Window.Table.buildLabel("Image name: "), Wikifier.Window.Table.buildCell(new west.gui.Textfield('wikifier_img_name').setSize(15).getMainDiv())];
+                var r2 = Wikifier.Window.Table.buildRow(r2Content);
+                table.append(r1).append(r2);
+                var result = $("<td>").attr('colspan', '2').html(new west.gui.Textarea(null, null).setId('wikifier_result').setWidth(225).setHeight(170).getMainDiv());
+                table.append(result);
                 return table;
             }
         }
@@ -170,6 +177,6 @@ var Wikifier = {
         var content = $('<div>');
         content.append(Wikifier.Window.Table.buildTable());
         var contentScroll = new west.gui.Scrollpane().appendContent(content);
-        wman.open("wikifier", "Item Wikifier").setMiniTitle("Item Wikifier").setSize(700, 480).appendToContentPane(contentScroll.getMainDiv());
+        wman.open("wikifier", "Item Wikifier").setMiniTitle("Item Wikifier").setSize(300, 480).appendToContentPane(contentScroll.getMainDiv());
     }
 }
