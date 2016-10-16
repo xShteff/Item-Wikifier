@@ -135,6 +135,32 @@ var Wikifier = {
             wman.open("wikifier", "Item Wikifier").setMiniTitle("Item Wikifier").setSize(300, 480).appendToContentPane(contentScroll.getMainDiv());
         },
     },
+    Icon: {
+        init: function() {
+            var icon = $('<div></div>').attr({
+                'title': 'Item Wikifier',
+                'class': 'menulink'
+            }).css({
+                'background': 'url("https://puu.sh/rKZbe/ea7c08f81e.png")',
+                'background-position': '0px 0px'
+            }).mouseleave(function() {
+                $(this).css("background-position", "0px 0px");
+            }).mouseenter(function(e) {
+                $(this).css("background-position", "25px 0px");
+            }).click(function() {
+                Wikifier.Window.open();
+            });
+
+            var cap = $('<div></div>').attr({
+                'class': 'menucontainer_bottom'
+            });
+
+            $("#ui_menubar .ui_menucontainer :last").after($('<div></div>').attr({
+                'class': 'ui_menucontainer',
+                'id': 'magicbundle_init_button'
+            }).append(icon).append(cap));
+        }
+    },
     wikifyItem: function(itemID) {
         var item = ItemManager.get(itemID);
         if (item === undefined) {
@@ -195,4 +221,4 @@ var Wikifier = {
         }
     }
 }
-Wikifier.open();
+Wikifier.Icon.init();
