@@ -25,7 +25,7 @@ var keyStrings = {
     'Vigor': 'vig',
     'Toughness': 'tou',
     'Stamina': 'sta',
-    'Health Points': 'hea',
+    'Health points': 'hea',
     'Horseback Riding': 'rid',
     'Reflex': 'ref',
     'Dodging': 'dod',
@@ -122,18 +122,18 @@ var Wikifier = {
                 table.append(result);
                 return table;
             }
-        }
-    },
-    open: function() {
-        var content = $('<div>');
-        content.append(Wikifier.Window.Table.buildTable());
-        var button = new west.gui.Button("Wikify it!", function() {
-            var itemId = $('#wikifier_item_id').val();
-            $('#wikifier_result').val(Wikifier.wikifyItem(itemId));
-        });
-        content.append(button.getMainDiv());
-        var contentScroll = new west.gui.Scrollpane().appendContent(content);
-        wman.open("wikifier", "Item Wikifier").setMiniTitle("Item Wikifier").setSize(300, 480).appendToContentPane(contentScroll.getMainDiv());
+        },
+        open: function() {
+            var content = $('<div>');
+            content.append(Wikifier.Window.Table.buildTable());
+            var button = new west.gui.Button("Wikify it!", function() {
+                var itemId = $('#wikifier_item_id').val();
+                $('#wikifier_result').val(Wikifier.wikifyItem(itemId));
+            });
+            content.append(button.getMainDiv());
+            var contentScroll = new west.gui.Scrollpane().appendContent(content);
+            wman.open("wikifier", "Item Wikifier").setMiniTitle("Item Wikifier").setSize(300, 480).appendToContentPane(contentScroll.getMainDiv());
+        },
     },
     wikifyItem: function(itemID) {
         var item = ItemManager.get(itemID);
