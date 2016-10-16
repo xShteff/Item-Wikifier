@@ -92,52 +92,84 @@ var fortSectorKeys = {
 }
 
 var wikifyItem = function(itemID) {
-    var item = ItemManager.get(itemID);
-    var all = "<includeonly>{{Popup Item|"
-    all += item.name + "|";
-    if (item.type == "right_arm")
-        all += `(${item_sub_title[item.sub_type]})`;
-    else
-        all += `${item_type_title[item.type]}\n`;
+        var item = ItemManager.get(itemID);
+        var all = "<includeonly>{{Popup Item|"
+        all += item.name + "|";
+        if (item.type == "right_arm")
+            all += `(${item_sub_title[item.sub_type]})`;
+        else
+            all += `${item_type_title[item.type]}\n`;
 
-    all += "|{{{1}}}|bg={{#if:{{{bg|}}}|{{{bg}}}|1}}|nb={{#if:{{{nb|}}}|{{{nb}}}|}}|";
+        all += "|{{{1}}}|bg={{#if:{{{bg|}}}|{{{bg}}}|1}}|nb={{#if:{{{nb|}}}|{{{nb}}}|}}|";
 
-    $.each(item.bonus, function(key, props) {
-        if (key.toLowerCase() == "item") {
-            $.each(props, function(id, values) {
-                $.each(values, function(valkey, valval) {
-                    if (valkey.toLowerCase() == "desc") {
-                        var regex = /\+(.*) (.*) \(per Level\)/g;
-                        var attr = regex.exec(valval);
-                        var shortKey = keyStrings[attr[2]];
-                        all += `${shortKey}=${attr[1]}|`;
-                    }
+        $.each(item.bonus, function(key, props) {
+            if (key.toLowerCase() == "item") {
+                $.each(props, function(id, values) {
+                    $.each(values, function(valkey, valval) {
+                        if (valkey.toLowerCase() == "desc") {
+                            var regex = /\+(.*) (.*) \(per Level\)/g;
+                            var attr = regex.exec(valval);
+                            var shortKey = keyStrings[attr[2]];
+                            all += `${shortKey}=${attr[1]}|`;
+                        }
+                    });
                 });
-            });
-        } else if (key.toLowerCase() == "skills" || key.toLowerCase() == "attributes") {
-            $.each(props, function(id, values) {
-                all += `${keyNames[id]}=${values}|`;
-            });
-        } else if (key.toLowerCase() == "fortbattle") {
-            $.each(props, function(id, values) {
-            	if(values != 0)
-                	all += `${fortKeys[id]}=${values}|`;
-            });
-        } else if (key.toLowerCase() == "fortbattlesector") {
-            $.each(props, function(id, values) {
-            	if(values != 0)
-                	all += `${fortSectorKeys[id]}=${values}|`;
-            });
-        }
-    });
-    if (item.speed != null)
-        all += `${keyNames[speed]}=${item.speed}|`;
-    if (item.type == "right_arm" || item.type == "left_arm")
-        all += `dmg=${item.damage.damage_min}-${item.damage.damage_max}|`;
-    var isUpgradeable = (item.upgradeable) ? "1" : "0";
-    all += `${keyNames['level']}=${item.level}|${keyNames['upgradeable']}=${isUpgradeable}|${keyNames['item_id']}=${item.item_id}|`;
+            } else if (key.toLowerCase() == "skills" || key.toLowerCase() == "attributes") {
+                $.each(props, function(id, values) {
+                    all += `${keyNames[id]}=${values}|`;
+                });
+            } else if (key.toLowerCase() == "fortbattle") {
+                $.each(props, function(id, values) {
+                    if (values != 0)
+                        all += `${fortKeys[id]}=${values}|`;
+                });
+            } else if (key.toLowerCase() == "fortbattlesector") {
+                $.each(props, function(id, values) {
+                    if (values != 0)
+                        all += `${fortSectorKeys[id]}=${values}|`;
+                });
+            }
+        });
+        if (item.speed != null)
+            all += `${keyNames[speed]}=${item.speed}|`;
+        if (item.type == "right_arm" || item.type == "left_arm")
+            all += `dmg=${item.damage.damage_min}-${item.damage.damage_max}|`;
+        var isUpgradeable = (item.upgradeable) ? "1" : "0";
+        all += `${keyNames['level']}=${item.level}|${keyNames['upgradeable']}=${isUpgradeable}|${keyNames['item_id']}=${item.item_id}|`;
 
-    all += `}}</includeonly><noinclude>[[Category:${item_type_title[item.type]}]]<center>{{Item ${item.name}|R}}</center></noinclude>`;
-    return all;
+        all += `}}</includeonly><noinclude>[[Category:${item_type_title[item.type]}]]<center>{{Item ${item.name}|R}}</center></noinclude>`;
+        return all;
+    }
+    //var wikified = `<includeonly>{{Popup Item|Lee's rifle|Gun|{{{1}}}|bg={{#if:{{{bg|}}}|{{{bg}}}|1}}|nb={{#if:{{{nb|}}}|{{{nb}}}|}}|mob=0.04|hid=0.08|aim=0.04|tac=0.04|dmglvl=2|dmg=20-40|lvl=1|upg=1|set=Robert Lee's weapons|id=50218000}}</includeonly><noinclude>[[Category:Guns]]<center>{{Item Lee's rifle|R}}</center></noinclude>`;
+
+var Wikifier = {
+    Window: {
+        Table: {
+            buildRow: function(array) {
+                var row = $('<tr>');
+                for (var i = 0; i < array.length; i++)
+                    row.append(array[i]);
+                return row;
+            },
+            buildCell: function(content) {
+                return $('<td>').html(content);
+            },
+            buildLabel: function(text) {
+                return $('<td>').text(text).css('line-height', '30px');
+            },
+            buildTable: function() {
+                var table = $('<table>');
+                var r1Content = [Wikifier.Window.Table.buildLabel("Item Id"), Wikifier.Window.Table.buildCell(new west.gui.Textfield('item_id').setSize(10).getMainDiv())];
+                var r1 = Wikifier.Window.Table.buildRow(r1Content);
+                table.append(r1);
+                return table;
+            }
+        }
+    },
+    open: function() {
+        var content = $('<div>');
+        content.append(Wikifier.Window.Table.buildTable());
+        var contentScroll = new west.gui.Scrollpane().appendContent(content);
+        wman.open("wikifier", "Item Wikifier").setMiniTitle("Item Wikifier").setSize(700, 480).appendToContentPane(contentScroll.getMainDiv());
+    }
 }
-//var wikified = `<includeonly>{{Popup Item|Lee's rifle|Gun|{{{1}}}|bg={{#if:{{{bg|}}}|{{{bg}}}|1}}|nb={{#if:{{{nb|}}}|{{{nb}}}|}}|mob=0.04|hid=0.08|aim=0.04|tac=0.04|dmglvl=2|dmg=20-40|lvl=1|upg=1|set=Robert Lee's weapons|id=50218000}}</includeonly><noinclude>[[Category:Guns]]<center>{{Item Lee's rifle|R}}</center></noinclude>`;
