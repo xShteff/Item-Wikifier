@@ -41,7 +41,9 @@ var keyStrings = {
     'Trading': 'tra',
     'Animal Instinct': 'ani',
     'Appearance': 'app',
-    'Damage': 'dmglvl'
+    'Damage': 'dmglvl',
+    'Multiplayer Attack': 'fboff',
+    "Multiplayer Defense": 'fbdef'
 }
 
 var keyNames = {
@@ -91,57 +93,6 @@ var fortSectorKeys = {
     damage: 'fbdmgs'
 }
 
-var wikifyItem = function(itemID) {
-        var item = ItemManager.get(itemID);
-        var all = "<includeonly>{{Popup Item|"
-        all += item.name + "|";
-        if (item.type == "right_arm")
-            all += `(${item_sub_title[item.sub_type]})`;
-        else
-            all += `${item_type_title[item.type]}\n`;
-
-        all += "|{{{1}}}|bg={{#if:{{{bg|}}}|{{{bg}}}|1}}|nb={{#if:{{{nb|}}}|{{{nb}}}|}}|";
-
-        $.each(item.bonus, function(key, props) {
-            if (key.toLowerCase() == "item") {
-                $.each(props, function(id, values) {
-                    $.each(values, function(valkey, valval) {
-                        if (valkey.toLowerCase() == "desc") {
-                            var regex = /\+(.*) (.*) \(per Level\)/g;
-                            var attr = regex.exec(valval);
-                            var shortKey = keyStrings[attr[2]];
-                            all += `${shortKey}=${attr[1]}|`;
-                        }
-                    });
-                });
-            } else if (key.toLowerCase() == "skills" || key.toLowerCase() == "attributes") {
-                $.each(props, function(id, values) {
-                    all += `${keyNames[id]}=${values}|`;
-                });
-            } else if (key.toLowerCase() == "fortbattle") {
-                $.each(props, function(id, values) {
-                    if (values != 0)
-                        all += `${fortKeys[id]}=${values}|`;
-                });
-            } else if (key.toLowerCase() == "fortbattlesector") {
-                $.each(props, function(id, values) {
-                    if (values != 0)
-                        all += `${fortSectorKeys[id]}=${values}|`;
-                });
-            }
-        });
-        if (item.speed != null)
-            all += `${keyNames[speed]}=${item.speed}|`;
-        if (item.type == "right_arm" || item.type == "left_arm")
-            all += `dmg=${item.damage.damage_min}-${item.damage.damage_max}|`;
-        var isUpgradeable = (item.upgradeable) ? "1" : "0";
-        all += `${keyNames['level']}=${item.level}|${keyNames['upgradeable']}=${isUpgradeable}|${keyNames['item_id']}=${item.item_id}|`;
-
-        all += `}}</includeonly><noinclude>[[Category:${item_type_title[item.type]}]]<center>{{Item ${item.name}|R}}</center></noinclude>`;
-        return all;
-    }
-    //var wikified = `<includeonly>{{Popup Item|Lee's rifle|Gun|{{{1}}}|bg={{#if:{{{bg|}}}|{{{bg}}}|1}}|nb={{#if:{{{nb|}}}|{{{nb}}}|}}|mob=0.04|hid=0.08|aim=0.04|tac=0.04|dmglvl=2|dmg=20-40|lvl=1|upg=1|set=Robert Lee's weapons|id=50218000}}</includeonly><noinclude>[[Category:Guns]]<center>{{Item Lee's rifle|R}}</center></noinclude>`;
-
 var Wikifier = {
     Window: {
         Table: {
@@ -167,7 +118,7 @@ var Wikifier = {
                 var r2Content = [Wikifier.Window.Table.buildLabel("Image name: "), Wikifier.Window.Table.buildCell(new west.gui.Textfield('wikifier_img_name').setSize(15).getMainDiv())];
                 var r2 = Wikifier.Window.Table.buildRow(r2Content);
                 table.append(r1).append(r2);
-                var result = $("<td>").attr('colspan', '2').html(new west.gui.Textarea(null, null).setId('wikifier_result').setWidth(225).setHeight(170).getMainDiv());
+                var result = $("<td>").attr('colspan', '2').html(new west.gui.Textarea(null, null).setId('wikifier_result').setWidth(225).setHeight(260).getMainDiv());
                 table.append(result);
                 return table;
             }
@@ -176,7 +127,72 @@ var Wikifier = {
     open: function() {
         var content = $('<div>');
         content.append(Wikifier.Window.Table.buildTable());
+        var button = new west.gui.Button("Wikify it!", function() {
+            var itemId = $('#wikifier_item_id').val();
+            $('#wikifier_result').val(Wikifier.wikifyItem(itemId));
+        });
+        content.append(button.getMainDiv());
         var contentScroll = new west.gui.Scrollpane().appendContent(content);
         wman.open("wikifier", "Item Wikifier").setMiniTitle("Item Wikifier").setSize(300, 480).appendToContentPane(contentScroll.getMainDiv());
+    },
+    wikifyItem: function(itemID) {
+        var item = ItemManager.get(itemID);
+        if (item === undefined) {
+            return "Item not found"
+        } else {
+            var all = "<includeonly>{{Popup Item|"
+            all += item.name + "|";
+            if (item.type == "right_arm")
+                all += `(${item_sub_title[item.sub_type]})`;
+            else
+                all += `${item_type_title[item.type]}\n`;
+
+            all += "|{{{1}}}|bg={{#if:{{{bg|}}}|{{{bg}}}|1}}|nb={{#if:{{{nb|}}}|{{{nb}}}|}}|";
+
+            $.each(item.bonus, function(key, props) {
+                if (key.toLowerCase() == "item") {
+                    $.each(props, function(id, values) {
+                        $.each(values, function(valkey, valval) {
+                            if (valkey.toLowerCase() == "desc") {
+                                var regex = /\+(\d|\d.\d{0,3})\s(.*) \((Fort battle bonus|Fort battle sector bonus|per Level)\)/g;
+                                var attr = regex.exec(valval);
+                                var shortKey = keyStrings[attr[2]];
+                                all += `${shortKey}=${attr[1]}|`;
+                            }
+                        });
+                    });
+                } else if (key.toLowerCase() == "skills" || key.toLowerCase() == "attributes") {
+                    $.each(props, function(id, values) {
+                        all += `${keyNames[id]}=${values}|`;
+                    });
+                } else if (key.toLowerCase() == "fortbattle") {
+                    $.each(props, function(id, values) {
+                        if (values != 0)
+                            all += `${fortKeys[id]}=${values}|`;
+                    });
+                } else if (key.toLowerCase() == "fortbattlesector") {
+                    $.each(props, function(id, values) {
+                        if (values != 0)
+                            all += `${fortSectorKeys[id]}=${values}|`;
+                    });
+                }
+            });
+            if (item.speed != null)
+                all += `${keyNames['speed']}=${item.speed}|`;
+            if (item.type == "right_arm" || item.type == "left_arm")
+                all += `dmg=${item.damage.damage_min}-${item.damage.damage_max}|`;
+            var isUpgradeable = (item.upgradeable) ? "1" : "0";
+            all += `${keyNames['level']}=${item.level}|${keyNames['upgradeable']}=${isUpgradeable}|${keyNames['item_id']}=${item.item_id}|`;
+            var imgName = $('#wikifier_img_name').val();
+            if (item.set != null) {
+                var setName = west.storage.ItemSetManager._setList[item.set].name;
+                all += `set=${setName}|`;
+            }
+            if (imgName.length > 0)
+                all += `img=${imgName}`;
+            all += `}}</includeonly><noinclude>[[Category:${item_type_title[item.type]}]]<center>{{Item ${item.name}|R}}</center></noinclude>`;
+            return all;
+        }
     }
 }
+Wikifier.open();
